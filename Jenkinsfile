@@ -13,7 +13,7 @@ pipeline {
         stage('Repository pull') {
             steps {
                 sshagent([cred]) {
-                    sh """ssh -o StrictHostKeyChecking=no ${server} << EOF
+                    sh """ssh ${server} << EOF
                         cd ${dir}
                         git remote add origin ${repo} || git remote set-url origin ${repo}
                         git pull origin ${branch}
