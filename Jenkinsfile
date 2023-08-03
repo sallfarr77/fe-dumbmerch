@@ -12,47 +12,55 @@ pipeline {
     stages {
         stage('Repository pull') {
             steps {
-                sshagent(credentials: [cred]) {
-                    sh """ssh ${server} << EOF
+                sshagent([cred]) {
+                    sh """ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${dir}
-                        git remote set-url origin ${repo}
-                        git fetch origin ${branch}
-                        git checkout ${branch}
-                    EOF"""
+                        git remote add origin ${repo} || git remote set-url origin ${repo}
+                        git pull origin ${branch}
+                        exit
+                        EOF
+                    """
                 }
             }
         }
 
         stage('Image build') {
             steps {
-                sshagent(credentials: [cred]) {
+                sshagent([cred]) {
                     sh """ssh -o StrictHostKeyChecking=no ${server} << EOF
                         cd ${dir}
                         docker build -t ${imagename}:latest .
-                    EOF"""
+                        exit
+                        EOF
+                    """
                 }
             }
         }
 
         stage('Running the image in a container') {
             steps {
-                sshagent(credentials: [cred]) {
+                sshagent([cred]) {
                     sh """ssh -o StrictHostKeyChecking=no ${server} << EOF
-                        docker stop ${imagename} || true
-                        docker rm ${imagename} || true
-                        docker run -d -p 3000:3000 --name="${imagename}" ${dockerusername}/${imagename}:latest
-                    EOF"""
+                        cd ${dir}
+                        docker container stop ${imagename} || true
+                        docker container rm ${imagename} || true
+                        docker run -d -p 3000:3000 --name="${imagename}"  ${imagename}:latest
+                        exit
+                        EOF
+                    """
                 }
             }
         }
 
         stage('Image push') {
             steps {
-                sshagent(credentials: [cred]) {
+               sshagent([cred]) {
                     sh """ssh -o StrictHostKeyChecking=no ${server} << EOF
                         docker tag ${imagename}:latest ${dockerusername}/${imagename}:latest
-                        docker push ${dockerusername}/${imagename}:latest
-                    EOF"""
+                        docker image push ${dockerusername}/${imagename}:latest
+                        exit
+                    EOF
+                    """
                 }
             }
         }
