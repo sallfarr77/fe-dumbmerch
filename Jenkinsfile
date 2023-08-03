@@ -1,5 +1,5 @@
 def branch = "staging"
-def repo = "git@github.com:sallfarr77/fe-dumbmerch.git"
+def repo = "https://github.com/sallfarr77/fe-dumbmerch.git"
 def cred = "appserver"
 def dir = "~/fe-dumbmerch"
 def server = "sallfarr@103.186.1.14"
